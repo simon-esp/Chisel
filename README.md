@@ -1,2 +1,2 @@
-# metal-scripting-language
-bends like metal but doesnt snap like cheap china plastic
+# Iron-Scripting-Language (.isl)
+As iron sharpens iron, a brother sharpens his brother.
