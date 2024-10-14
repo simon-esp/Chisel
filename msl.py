@@ -1,6 +1,36 @@
 global vars
 vars = {}
-blacklist = []
+global blacklist
+blacklist = [
+    'os.system(',           
+    'os.popen(',            
+    'os.spawn(',            
+    'os.exec(',             
+    'os.startfile(',        
+    'subprocess.Popen(',    
+    'subprocess.call(',     
+    'subprocess.run(',      
+    'subprocess.check_output(', 
+    'shutil.rmtree(',       
+    'shutil.move(',         
+    'shutil.copyfile(',     
+    'os.remove(',           
+    'os.rmdir(',            
+    'os.unlink(',           
+    'os.rename(',           
+    'os.chmod(',            
+    'os.chown(',            
+    'socket.socket(',       
+    'threading.Thread(',    
+    'multiprocessing.Process(', 
+    'eval(',                
+    'exec(',                
+    'open(',                
+    'ctypes.CDLL(',         
+    'ctypes.windll(',       
+    'ctypes.cdll(',         
+    'ctypes.create_string_buffer(', 
+]
 
 def parse(p):
     """ I forgot how this works, i just know it works
@@ -61,20 +91,24 @@ def evalf(expression):
     # This didnt take very long surprisingly
     global vars
     # Replace all vars with their corresponding value in the vars dict
+    expr = expression
     for i in vars:
-        expression = expression.replace(i, str(vars[i]))
-    
-    if contains_any(expression, blacklist):
+        expr = expr.replace(i, str(vars[i]))
 
+    # Check if expression is dangerous
+    if contains_any(expr, blacklist):
+        raise Exception("Blacklisted expression")
+    else:
+        pass
 
     try:
         # Try to literal_eval the expression
-        result = eval(expression)
+        result = eval(expr)
         return result
     except (ValueError, SyntaxError):
         # Chatgpt forced me to include error handling
         # Help me get my testicles back by making stable code
-        raise Exception(f"Invalid expression or unsupported operation with `{expression}`")
+        raise Exception(f"Invalid expression or unsupported operation with `{expr}`")
 
 def parse_args(a):
     # This shit took me 2 hours and the problem wasnt even here
@@ -120,12 +154,17 @@ def parse_args(a):
     return product
 
 def exec(l):
+    global vars
     # Get args and cmd
     cmd = l.split(' ')[0]
     args = parse_args(' '.join(l.split(' ')[1:]))
     # Execute with cmd as command and args (array) for arguments
     if cmd == "log":
         print(evalf(args[0]))
+    if cmd == "var":
+        vars[evalf(args[0])] = f'"{evalf(args[1])}"'
+    if cmd == "pyeval":
+        eval(evalf(args[0]))
 
 def lbl(a):
     # Do line-by-line execution
@@ -133,4 +172,4 @@ def lbl(a):
         # This is how to run a single line btw
         exec(i)
 
-lbl(parse('log 3 * (1 + 2);'))
+lbl(parse('var "hello","world"; log hello; pyeval "print(\'hello verden\')";'))
