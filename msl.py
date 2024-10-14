@@ -1,6 +1,6 @@
-from ast import literal_eval as l_eval
 global vars
 vars = {}
+blacklist = []
 
 def parse(p):
     """ I forgot how this works, i just know it works
@@ -50,6 +50,13 @@ def find_functions(p):
             funcs_temp[func_name] = parsed_body
     return funcs_temp
 
+def contains_any(string, array):
+    # Loop through each item in the array
+    for item in array:
+        if item in string:
+            return True
+    return False
+
 def evalf(expression):
     # This didnt take very long surprisingly
     global vars
@@ -57,9 +64,12 @@ def evalf(expression):
     for i in vars:
         expression = expression.replace(i, str(vars[i]))
     
+    if contains_any(expression, blacklist):
+
+
     try:
         # Try to literal_eval the expression
-        result = l_eval(expression)
+        result = eval(expression)
         return result
     except (ValueError, SyntaxError):
         # Chatgpt forced me to include error handling
@@ -123,4 +133,4 @@ def lbl(a):
         # This is how to run a single line btw
         exec(i)
 
-lbl(parse('log Hello World";'))
+lbl(parse('log 3 * (1 + 2);'))
