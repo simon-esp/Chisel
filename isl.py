@@ -81,34 +81,78 @@ def find_functions(p):
     return funcs_temp
 
 def contains_any(string, array):
-    # Loop through each item in the array
-    for item in array:
-        if item in string:
-            return True
+    quotes = False
+    # Go through each character in the string
+    for i, char in enumerate(string):
+        # Check for opening or closing quotes
+        if char == '"' or "'":
+            quotes = not quotes  # Toggle the quotes
+        
+        # If not in quotes, check for niggalist words
+        if not quotes:
+            for item in array:
+                if item in string[i:i+len(item)]:
+                    return item
+    
     return False
 
+def replace_vars_in_expr(expr, vars):
+    in_quotes = False
+    modified_expr = []
+    i = 0
+
+    while i < len(expr):
+        char = expr[i]
+
+        if char == '"':
+            in_quotes = not in_quotes
+
+        if not in_quotes:
+            for var in vars:
+                var_len = len(var)
+                if expr[i:i + var_len] == var and (i + var_len == len(expr) or not expr[i + var_len].isalnum()):
+                    # Convert value to string
+                    modified_expr.append(str(vars[var]))
+                    i += var_len - 1  # Skip the length of the variable
+                    break
+            else:
+                # Convert everything to string before appending
+                modified_expr.append(str(char))
+        else:
+            modified_expr.append(str(char))
+
+        i += 1
+
+    # Join modified_expr which now contains only strings
+    return ''.join(modified_expr)
+
 def evalf(expression):
-    # This didnt take very long surprisingly
     global vars
     # Replace all vars with their corresponding value in the vars dict
-    expr = expression
-    for i in vars:
-        expr = expr.replace(i, str(vars[i]))
+    expr = replace_vars_in_expr(expression, vars)
 
     # Check if expression is dangerous
-    if contains_any(expr, blacklist):
-        raise Exception("Blacklisted expression")
+    blacklisted = contains_any(expr, blacklist)
+    if blacklisted:
+        raise Exception(f"Blacklisted expression: `{expr}`\nIssue: {blacklisted} is blacklisted (dangerous)")
     else:
         pass
 
     try:
-        # Try to literal_eval the expression
+        # If expression is a single character or string, return it as is
+        if expr.isalpha() and len(expr) == 1:
+            return expr
+        # Handle numerical values directly
+        if expr.isdigit():
+            return int(expr)
+        # Handle expressions with eval
         result = eval(expr)
         return result
-    except (ValueError, SyntaxError):
-        # Chatgpt forced me to include error handling
-        # Help me get my testicles back by making stable code
-        raise Exception(f"Invalid expression or unsupported operation with `{expr}`")
+    except (ValueError, SyntaxError) as e:
+        # Handle literal strings or expressions
+        if isinstance(expr, str):
+            return expr
+        raise Exception(f"Invalid expression or unsupported operation with `{expr}`\nError code: {e}")
 
 def parse_args(a):
     # This shit took me 2 hours and the problem wasnt even here
@@ -154,7 +198,6 @@ def parse_args(a):
     return product
 
 def exec(l):
-    global vars
     # Get args and cmd
     cmd = l.split(' ')[0]
     args = parse_args(' '.join(l.split(' ')[1:]))
@@ -162,9 +205,19 @@ def exec(l):
     if cmd == "log":
         print(evalf(args[0]))
     if cmd == "var":
-        vars[evalf(args[0])] = f'"{evalf(args[1])}"'
+        vars[args[0]] = f'"{evalf(args[1])}"'
     if cmd == "pyeval":
         eval(evalf(args[0]))
+    if cmd == "if":
+        if evalf(args[0]):
+            lbl(parse(args[1][1:-1]))
+    if cmd == "while":
+        while evalf(args[0]):
+            lbl(parse(args[1][1:-1]))
+    if cmd == "for":
+        for i in evalf(args[1]):
+            vars[args[0]] = i
+            lbl(parse(args[2][1:-1]))
 
 def lbl(a):
     # Do line-by-line execution
@@ -172,4 +225,6 @@ def lbl(a):
         # This is how to run a single line btw
         exec(i)
 
-lbl(parse('var "hello","world"; log hello; pyeval "print(\'hello verden\')";'))
+with open('test.isl', 'r') as f:
+    script = f.read()
+lbl(parse(script))
