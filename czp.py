@@ -213,6 +213,10 @@ def exec(l):
     if cmd == "if":
         if evalf(args[0]):
             lbl(parse(args[1][1:-1]))
+        else:
+            if len(args) >= 4:
+                if args[2] == 'else':
+                    lbl(parse(args[3][1:-1]))
     if cmd == "while":
         while evalf(args[0]):
             lbl(parse(args[1][1:-1]))
