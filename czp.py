@@ -111,21 +111,22 @@ def replace_vars_in_expr(expr, vars):
             for var in vars:
                 var_len = len(var)
                 if expr[i:i + var_len] == var and (i + var_len == len(expr) or not expr[i + var_len].isalnum()):
-                    # Convert value to string
-                    if vars[var]
-                    modified_expr.append(str(vars[var]))
+                    # Directly append the value, leaving it as an int/float or string
+                    modified_expr.append(vars[var])  # Append the variable's value
                     i += var_len - 1  # Skip the length of the variable
                     break
             else:
-                # Convert everything to string before appending
-                modified_expr.append(str(char))
+                modified_expr.append(char)  # Keep the character as is
         else:
-            modified_expr.append(str(char))
+            modified_expr.append(char)  # Keep the character as is
 
         i += 1
 
-    # Join modified_expr which now contains only strings
-    return ''.join(modified_expr)
+    # Now we evaluate the expression
+    # Use a list comprehension to construct a proper expression string for eval
+    expression = ''.join(str(x) if isinstance(x, (str, int, float)) else x for x in modified_expr)
+    
+    return expression  # Return the final expression to be evaluated
 
 def evalf(expression):
     global vars
@@ -203,7 +204,7 @@ def exec(l):
     cmd = l.split(' ')[0]
     args = parse_args(' '.join(l.split(' ')[1:]))
     # Execute with cmd as command and args (array) for arguments
-    if cmd == "log":
+    if cmd == "print":
         print(evalf(args[0]))
     if cmd == "var":
         vars[args[0]] = f'"{evalf(args[1])}"'
