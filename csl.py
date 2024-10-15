@@ -112,6 +112,7 @@ def replace_vars_in_expr(expr, vars):
                 var_len = len(var)
                 if expr[i:i + var_len] == var and (i + var_len == len(expr) or not expr[i + var_len].isalnum()):
                     # Convert value to string
+                    if vars[var]
                     modified_expr.append(str(vars[var]))
                     i += var_len - 1  # Skip the length of the variable
                     break
@@ -143,7 +144,7 @@ def evalf(expression):
         if expr.isalpha() and len(expr) == 1:
             return expr
         # Handle numerical values directly
-        if expr.isdigit():
+        if expr.strip('-').strip('.').isnumeric():
             return int(expr)
         # Handle expressions with eval
         result = eval(expr)
@@ -218,6 +219,9 @@ def exec(l):
         for i in evalf(args[1]):
             vars[args[0]] = i
             lbl(parse(args[2][1:-1]))
+    if cmd == "rep":
+        for i in range(evalf(args[0])):
+            lbl(parse(args[1][1:-1]))
 
 def lbl(a):
     # Do line-by-line execution
@@ -225,6 +229,6 @@ def lbl(a):
         # This is how to run a single line btw
         exec(i)
 
-with open('test.isl', 'r') as f:
+with open('test.czp', 'r') as f:
     script = f.read()
 lbl(parse(script))
